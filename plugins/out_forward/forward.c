@@ -631,7 +631,7 @@ void cb_forward_flush(void *data, size_t bytes,
     }
 
     total += bytes_sent;
-    flb_upstream_conn_release(u_conn);
+    flb_upstream_conn_release2(u_conn);
 
     if (ctx->time_as_integer == FLB_TRUE) {
         flb_free(out_buf);

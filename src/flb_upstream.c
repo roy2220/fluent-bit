@@ -234,3 +234,31 @@ int flb_upstream_conn_release(struct flb_upstream_conn *u_conn)
 
     return 0;
 }
+
+int flb_upstream_conn_release2(struct flb_upstream_conn *u_conn)
+{
+    struct flb_upstream *u = u_conn->u;
+
+    flb_trace("[upstream] [fd=%i] releasing connection %p (2)",
+              u_conn->fd, u_conn);
+
+    if (u->flags & FLB_IO_ASYNC) {
+        mk_event_del(u->evl, &u_conn->event);
+    }
+
+#ifdef FLB_HAVE_FLUSH_PTHREADS
+    pthread_mutex_lock(&u->mutex_queue);
+#endif
+
+    /* Move it to the available queue */
+    mk_list_del(&u_conn->_head);
+    mk_list_add(&u_conn->_head, &u->av_queue);
+
+#ifdef FLB_HAVE_FLUSH_PTHREADS
+    pthread_mutex_unlock(&u->mutex_queue);
+#endif
+
+    u->n_connections--;
+
+    return 0;
+}
